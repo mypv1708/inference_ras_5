@@ -1,0 +1,21 @@
+description: Ultralytics YOLO11s-pose model trained on /teamspace/studios/this_studio/Silkworm-Tracking-v2-20/data.yaml
+author: Ultralytics
+date: '2025-10-24T11:24:13.913243'
+version: 8.3.213
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: pose
+batch: 1
+imgsz:
+- 512
+- 512
+names:
+  0: silkworm
+args:
+  batch: 1
+  half: false
+channels: 3
+kpt_shape:
+- 3
+- 3

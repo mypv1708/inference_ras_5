@@ -1,42 +1,42 @@
 # Silkworm Tracking Configuration
 # Video Configuration
 video:
-  source: "/teamspace/studios/this_studio/project/video/in/real/real silk.mp4"
-  output: "/teamspace/studios/this_studio/project/video/out/real/real_4.mp4"
+  source: "/teamspace/studios/this_studio/video/in/real_8.mp4"
+  output: "/teamspace/studios/this_studio/video/out/real_8_v2.mp4"
   # Optional realtime settings for Raspberry Pi / low-power devices
-  camera_index: 1 # which webcam index to open for realtime
+  camera_index: 0 # which webcam index to open for realtime
   display: true # show cv2 window during realtime
   write_output: false # write output video to file
   vid_stride: 2 # process every Nth frame (e.g., 2 or 3 to skip frames)
 
 # Model Configuration
 model:
-  path: "D:/AI/inference_ras_5/train_s/best.pt"
+  path: "D:/AI/inference_ras_5/best_ncnn_model"
   tracker_config: "bytetrack.yaml"
   # Optional performance hints
   device: null # e.g., 0 for GPU0, 'cpu' to force CPU, null to auto
-  imgsz: 416 # inference image size (reduce to 512/416 on Pi if needed)
+  imgsz: 512 # inference image size (reduce to 512/416 on Pi if needed)
 
 #  Detection Thresholds
 thresholds:
-  pose_conf: 0.80
-  detect_conf: 0.80
-  iou_thresh: 0.60
-  overlap_frames_thresh: 10
+  detect_conf: 0.60
+  pose_conf: 0.75
+  iou_thresh: 0.65
+  overlap_frames_thresh: 12
 
 # Freeze Detection
 freeze:
   pixel_thresh: 2.5
-  freeze_frames_thresh: 50
+  freeze_frames_thresh: 80
 
 # Tracker Configuration
 tracker:
   head_kp_index: 0
-  kp_conf_threshold: 0.8
-  max_missing_frames: 20
-  history_len: 250
-  smooth_alpha: 0.1
-  max_speed: 50.0
+  kp_conf_threshold: 0.75
+  max_missing_frames: 30
+  history_len: 300
+  smooth_alpha: 0.2
+  max_speed: 60.0
   buffer_size: 5
   min_delta: 2.0
 
