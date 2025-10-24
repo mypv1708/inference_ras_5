@@ -4,18 +4,19 @@ video:
   source: "/teamspace/studios/this_studio/video/in/real_8.mp4"
   output: "/teamspace/studios/this_studio/video/out/real_8_v2.mp4"
   # Optional realtime settings for Raspberry Pi / low-power devices
-  camera_index: 0 # which webcam index to open for realtime
+  camera_index: 1 # which webcam index to open for realtime
   display: true # show cv2 window during realtime
   write_output: false # write output video to file
   vid_stride: 2 # process every Nth frame (e.g., 2 or 3 to skip frames)
+  fps: 15
 
 # Model Configuration
 model:
-  path: "D:/AI/inference_ras_5/best_ncnn_model"
+  path: "D:/AI/inference_ras_5/best.pt"
   tracker_config: "bytetrack.yaml"
   # Optional performance hints
   device: null # e.g., 0 for GPU0, 'cpu' to force CPU, null to auto
-  imgsz: 512 # inference image size (reduce to 512/416 on Pi if needed)
+  imgsz: 416 # inference image size (reduce to 512/416 on Pi if needed)
 
 #  Detection Thresholds
 thresholds:

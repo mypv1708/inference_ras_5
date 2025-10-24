@@ -4,7 +4,7 @@ from ultralytics import YOLO
 from config import Config
 from freeze_detection import process_freeze
 from overlap_detection import process_overlap
-from silkworm_detection import draw_silkworm    
+from silkworm_detection import draw_silkworm
 
 
 def main():
@@ -36,7 +36,9 @@ def main():
         iou=cfg.iou_thresh,
         persist=True,
         stream=True,
-        imgsz=cfg.imgsz
+        imgsz=cfg.imgsz,
+        device=cfg.device,
+        vid_stride=cfg.vid_stride,
     ):
         frame = result.orig_img
         boxes, kpts = result.boxes, result.keypoints
@@ -90,3 +92,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

@@ -10,21 +10,41 @@ from silkworm_detection import draw_silkworm
 
 
 def parse_args():
+    # Load config first to get default values
+    cfg = Config()
+    
     parser = argparse.ArgumentParser(description="Raspberry Pi optimized silkworm detection")
-    parser.add_argument("--camera", type=int, default=0, help="Camera index")
-    parser.add_argument("--model", type=str, default=None, help="Model path override")
-    parser.add_argument("--imgsz", type=int, default=512, help="Inference image size")
-    parser.add_argument("--fps", type=int, default=10, help="Target FPS")
-    parser.add_argument("--skip", type=int, default=2, help="Skip every N frames")
-    parser.add_argument("--conf", type=float, default=0.6, help="Detection confidence")
+    parser.add_argument("--camera", type=int, default=cfg.camera_index, help="Camera index")
+    parser.add_argument("--model", type=str, default=cfg.model_path, help="Model path override")
+    parser.add_argument("--imgsz", type=int, default=cfg.imgsz, help="Inference image size")
+    parser.add_argument("--fps", type=int, default=cfg.fps, help="Target FPS")
+    parser.add_argument("--skip", type=int, default=cfg.vid_stride, help="Skip every N frames")
+    parser.add_argument("--conf", type=float, default=cfg.detect_conf, help="Detection confidence")
     parser.add_argument("--no-display", action="store_true", help="Disable display")
     parser.add_argument("--benchmark", action="store_true", help="Show performance metrics")
+    parser.add_argument("--list", action="store_true", help="List available cameras and exit")
     return parser.parse_args()
+
+
+def list_cameras(max_index: int = 5):
+    """List available cameras."""
+    available = []
+    for idx in range(max_index + 1):
+        cap = cv2.VideoCapture(idx)
+        if cap.isOpened():
+            available.append(idx)
+            cap.release()
+    print(f"📷 Available cameras: {available if available else 'None detected (tried 0..' + str(max_index) + ')'}")
+    return available
 
 
 def main():
     """Raspberry Pi optimized version - keeps all logic from main.py but optimized for Pi."""
     args = parse_args()
+    
+    if args.list:
+        list_cameras()
+        return
     
     cfg = Config()
     
@@ -40,15 +60,29 @@ def main():
     # ✅ Setup camera with Pi-friendly settings (like pose_person_realtime.py)
     cap = cv2.VideoCapture(args.camera)
     if not cap.isOpened():
-        raise FileNotFoundError(f"Không mở được camera: {args.camera}")
+        print(f"❌ Không mở được camera {args.camera}, thử camera 0...")
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            raise FileNotFoundError(f"Không mở được camera: {args.camera} và camera 0")
     
     # ✅ Pi-optimized camera settings (from pose_person_realtime.py)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     cap.set(cv2.CAP_PROP_FPS, args.fps)
     
+    # ✅ Test camera read
+    ret, test_frame = cap.read()
+    if not ret:
+        print("❌ Camera không đọc được frame, thử lại...")
+        cap.release()
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        cap.set(cv2.CAP_PROP_FPS, args.fps)
+    
     print(f"📹 Camera: 640x480 @ {args.fps} FPS")
     print(f"🎯 Inference size: {args.imgsz}")
+    print(f"⚙️ Config values: conf={args.conf}, skip={args.skip}, pose_conf={cfg.pose_conf}")
 
     # ✅ Performance tracking
     frame_count = 0
@@ -73,13 +107,14 @@ def main():
             inference_start = time.time()
             
             # ✅ Use predict with all parameters from main.py for consistency
+            device = cfg.device if cfg.device is not None else 'cpu'
             results = model.predict(
                 frame, 
                 imgsz=args.imgsz, 
                 conf=args.conf,
                 iou=cfg.iou_thresh,
                 verbose=False,
-                device='cpu'
+                device=device
             )
             
             inference_time = time.time() - inference_start

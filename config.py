@@ -17,16 +17,17 @@ class Config:
         # Video configuration
         self.source_video: str = config['video']['source']
         self.output_video: str = config['video']['output']
-        self.camera_index: int = config['video'].get('camera_index', 0)
+        self.camera_index: int = config['video'].get('camera_index', 1)
         self.display: bool = config['video'].get('display', True)
-        self.write_output: bool = config['video'].get('write_output', True)
-        self.vid_stride: int = config['video'].get('vid_stride', 1)
+        self.write_output: bool = config['video'].get('write_output', False)
+        self.vid_stride: int = config['video'].get('vid_stride', 2)
+        self.fps: int = config['video'].get('fps', 15)
         
         # Model configuration
         self.model_path: str = config['model']['path']
         self.tracker_config: str = config['model']['tracker_config']
         self.device = config['model'].get('device', None)
-        self.imgsz: int = int(config['model'].get('imgsz', 640))
+        self.imgsz: int = int(config['model'].get('imgsz', 416))
         
         # Thresholds
         self.pose_conf: float = config['thresholds']['pose_conf']
