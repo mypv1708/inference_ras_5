@@ -1,6 +1,6 @@
 import cv2
 from config import Config
-from utils import bbox_overlap, intersect
+from utils import bbox_overlap, intersect, point_segment_distance
 
 
 # Precomputed neighbor offsets to avoid recreating each call
@@ -18,10 +18,11 @@ def process_overlap(silkworms, overlap_counters, frame, cfg: Config):
 
     # Grid bucketing with optimized center calculation
     grid = {}
+    cell = getattr(cfg, 'grid_size', 100)
     for idx, (obj_id, h, b, t, box) in enumerate(silkworms):
         x1, y1, x2, y2 = box
         cx, cy = (x1+x2)//2, (y1+y2)//2
-        gx, gy = cx//cfg.grid_size, cy//cfg.grid_size
+        gx, gy = cx//cell, cy//cell
         grid.setdefault((gx, gy), []).append((idx, obj_id, h, b, t, box))
 
     # OPTIMIZED: Pre-compute candidate pairs more efficiently
@@ -81,6 +82,33 @@ def process_overlap(silkworms, overlap_counters, frame, cfg: Config):
                 if intersect(s1[0], s1[1], s2[0], s2[1]):
                     found = True
                     break
+
+        # If no hard intersection, check proximity: any keypoint of one
+        # close to the other's segments within threshold
+        if not found:
+            thresh = cfg.point_segment_dist_thresh
+            # keypoints for pair 1 and pair 2
+            pts1 = [h1, b1, t1]
+            pts2 = [h2, b2, t2]
+
+            # Check points of worm1 to segments of worm2
+            for p in pts1:
+                if found:
+                    break
+                for s in segs2:
+                    if point_segment_distance(p, s[0], s[1]) <= thresh:
+                        found = True
+                        break
+
+            # Check points of worm2 to segments of worm1
+            if not found:
+                for p in pts2:
+                    if found:
+                        break
+                    for s in segs1:
+                        if point_segment_distance(p, s[0], s[1]) <= thresh:
+                            found = True
+                            break
         
         # OPTIMIZED: Single dict access
         current_count = overlap_counters.get(key, 0)

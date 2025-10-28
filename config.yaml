@@ -1,29 +1,25 @@
 # Silkworm Tracking Configuration
 # Video Configuration
 video:
-  source: "/teamspace/studios/this_studio/video/in/real_8.mp4"
-  output: "/teamspace/studios/this_studio/video/out/real_8_v2.mp4"
   # Optional realtime settings for Raspberry Pi / low-power devices
-  camera_index: 0 # which webcam index to open for realtime
-  display: true # show cv2 window during realtime
-  write_output: false # write output video to file
+  camera_index: 1 # which webcam index to open for realtime
   vid_stride: 2 # process every Nth frame (e.g., 2 or 3 to skip frames)
   fps: 15
-
+    
 # Model Configuration
 model:
-  path: "D:/AI/inference_ras_5/best_s.pt"
-  tracker_config: "bytetrack.yaml"
+  path: "/home/ubuntu/work/mypv_work_space/silkworm-tracking/best_s.pt"
   # Optional performance hints
   device: null # e.g., 0 for GPU0, 'cpu' to force CPU, null to auto
-  imgsz: 416 # inference image size (optimized for Pi)
+  imgsz: 640 # inference image size (reduce to 512/416 on Pi if needed)
 
 #  Detection Thresholds
 thresholds:
   detect_conf: 0.60
   pose_conf: 0.75
   iou_thresh: 0.65
-  overlap_frames_thresh: 12
+  overlap_frames_thresh: 5
+  point_segment_dist_thresh: 5.0
 
 # Freeze Detection
 freeze:
@@ -33,36 +29,12 @@ freeze:
 # Tracker Configuration
 tracker:
   head_kp_index: 0
-  kp_conf_threshold: 0.75
-  max_missing_frames: 30
-  history_len: 300
-  smooth_alpha: 0.2
-  max_speed: 60.0
-  buffer_size: 5
-  min_delta: 2.0
 
 # Drawing Configuration
 drawing:
-  bbox_color: [0, 255, 0] # Green
   freeze_color: [0, 165, 255] # Orange
   overlap_color: [0, 0, 255] # Red
   head_color: [0, 0, 255] # Red
   body_color: [0, 255, 255] # Yellow
   tail_color: [255, 0, 0] # Blue
   line_color: [0, 255, 0] # Green
-  trajectory_color: [255, 0, 255] # Magenta
-  trajectory_thickness: 2
-
-# Grid Filter
-grid:
-  size: 100 # pixels per cell
-
-# Heatmap Configuration
-heatmap:
-  enabled: true
-  grid_shape: [4, 6] # [height, width] - number of grid cells
-  opacity: 0.3 # Heatmap overlay opacity (0-1)
-  overlap_thresh: 0.1 # Overlap threshold for counting
-  draw_grid: true # Draw grid lines
-  grid_alpha: 0.6 # Grid lines opacity (0-1)
-  max_detections_per_frame: 150 # Cap detections processed per frame for performance
