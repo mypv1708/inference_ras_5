@@ -24,13 +24,13 @@ thresholds:
 # Freeze Detection
 freeze:
   pixel_thresh: 2.5
-  freeze_frames_thresh: 80
+  freeze_frames_thresh: 100
 
 # Tracker Configuration
 tracker:
   head_kp_index: 0
-  max_distance: 30.0 # Maximum distance to match objects between frames
-  max_disappeared: 10 # Max frames an object can be missing before removing
+  max_distance: 20.0 # Maximum distance to match objects between frames
+  max_disappeared: 20 # Max frames an object can be missing before removing
 
 # Drawing Configuration
 drawing:
