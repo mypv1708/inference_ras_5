@@ -5,13 +5,13 @@ video:
   camera_index: 1 # which webcam index to open for realtime
   vid_stride: 2 # process every Nth frame (e.g., 2 or 3 to skip frames)
   fps: 15
-    
+
 # Model Configuration
 model:
-  path: "/home/ubuntu/work/mypv_work_space/silkworm-tracking/best_s.pt"
+  path: "best_n.pt"
   # Optional performance hints
   device: null # e.g., 0 for GPU0, 'cpu' to force CPU, null to auto
-  imgsz: 640 # inference image size (reduce to 512/416 on Pi if needed)
+  imgsz: 448 # inference image size (reduce to 512/416 on Pi if needed)
 
 #  Detection Thresholds
 thresholds:
@@ -29,6 +29,8 @@ freeze:
 # Tracker Configuration
 tracker:
   head_kp_index: 0
+  max_distance: 30.0 # Maximum distance to match objects between frames
+  max_disappeared: 10 # Max frames an object can be missing before removing
 
 # Drawing Configuration
 drawing:
@@ -38,3 +40,4 @@ drawing:
   body_color: [0, 255, 255] # Yellow
   tail_color: [255, 0, 0] # Blue
   line_color: [0, 255, 0] # Green
+  bbox_color: [255, 255, 0] # Cyan

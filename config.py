@@ -35,6 +35,8 @@ class Config:
         
         # Tracker configuration
         self.head_kp_index: int = config['tracker']['head_kp_index']
+        self.max_distance: float = config['tracker'].get('max_distance', 50.0)
+        self.max_disappeared: int = config['tracker'].get('max_disappeared', 10)
         
         # Drawing configuration
         self.freeze_color: Tuple[int, int, int] = tuple(config['drawing']['freeze_color'])
@@ -43,3 +45,4 @@ class Config:
         self.body_color: Tuple[int, int, int] = tuple(config['drawing']['body_color'])
         self.tail_color: Tuple[int, int, int] = tuple(config['drawing']['tail_color'])
         self.line_color: Tuple[int, int, int] = tuple(config['drawing']['line_color'])
+        self.bbox_color: Tuple[int, int, int] = tuple(config['drawing']['bbox_color'])

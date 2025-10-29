@@ -14,6 +14,7 @@ from config import Config
 from freeze_detection import process_freeze
 from overlap_detection import process_overlap
 from silkworm_detection import draw_silkworm
+from object_tracker import SilkwormTracker
 
 
 def parse_args():
@@ -83,21 +84,21 @@ def get_model_info(model_path: str):
         return "PyTorch model - may be slow on Pi"
 
 
-def process_detections(result, frame, cfg):
-    """Process detection results and extract silkworms."""
+def process_detections(result, frame, cfg, tracker):
+    """Process detection results and extract silkworms with stable IDs."""
     boxes, kpts = result.boxes, result.keypoints
-    silkworms = []
     
     if boxes is None or kpts is None:
-        return silkworms
+        return tracker.update([])
     
     # Extract data once
     points_all = kpts.xy.cpu().numpy().astype(int)
     confs_all = kpts.conf.cpu().numpy()
     bboxes = boxes.xyxy.cpu().numpy().astype(int)
     
+    # Collect valid detections
+    detections = []
     for idx in range(len(bboxes)):
-        obj_id = idx
         pts, confs, bbox = points_all[idx], confs_all[idx], bboxes[idx]
         
         # Get keypoint indices
@@ -117,14 +118,23 @@ def process_detections(result, frame, cfg):
         body_c = confs[body_idx]
         tail_c = confs[tail_idx]
         
-        # Draw silkworm
-        draw_silkworm(frame, obj_id, head, body, tail, bbox, head_c, body_c, tail_c, cfg)
-        
-        # Add to silkworms if confidence is high enough
+        # Add to detections if confidence is high enough
         if head_c >= cfg.pose_conf:
-            silkworms.append((obj_id, head, body, tail, bbox))
+            detections.append((head, body, tail, bbox))
     
-    return silkworms
+    # Update tracker and get stable IDs
+    tracked_silkworms = tracker.update(detections)
+    
+    # Draw silkworms with stable IDs
+    for obj_id, head, body, tail, bbox in tracked_silkworms:
+        # Get confidence for drawing (use average confidence for simplicity)
+        head_c = 0.8  # Default confidence for drawing
+        body_c = 0.8
+        tail_c = 0.8
+        
+        draw_silkworm(frame, obj_id, head, body, tail, bbox, head_c, body_c, tail_c, cfg)
+    
+    return tracked_silkworms
 
 
 def draw_performance_info(frame, inference_time, silkworms, frame_count):
@@ -171,6 +181,12 @@ def main():
     # Select device once
     device = cfg.device if cfg.device is not None else 'cpu'
     
+    # Initialize tracker
+    tracker = SilkwormTracker(
+        max_distance=cfg.max_distance,
+        max_disappeared=cfg.max_disappeared
+    )
+    
     try:
         while True:
             ret, frame = cap.read()
@@ -199,19 +215,16 @@ def main():
             
             # Process detections
             result = results[0]
-            silkworms = process_detections(result, frame, cfg)
+            silkworms = process_detections(result, frame, cfg, tracker)
             
             # Update total detections (sum of detections across frames)
             if result.boxes is not None:
                 total_detections += len(result.boxes)
             
-            # Freeze detection
+            # Freeze detection (use stable tracker IDs; avoid indexing YOLO confidences by ID)
             for silkworm in silkworms:
                 obj_id, head, body, tail, bbox = silkworm
-                if getattr(result.keypoints, 'conf', None) is not None:
-                    head_c = result.keypoints.conf[obj_id][cfg.head_kp_index].item()
-                else:
-                    head_c = 0.0
+                head_c = 1.0  # treat as confident detection for freeze logic gating
                 process_freeze(obj_id, head, head_c, bbox, cfg, head_history, freeze_counters, frame)
             
             # Overlap detection
