@@ -29,8 +29,8 @@ freeze:
 # Tracker Configuration
 tracker:
   head_kp_index: 0
-  max_distance: 20.0 # Maximum distance to match objects between frames
-  max_disappeared: 20 # Max frames an object can be missing before removing
+  max_distance: 50.0 # Maximum distance to match objects between frames
+  max_disappeared: 50 # Max frames an object can be missing before removing
 
 # Drawing Configuration
 drawing:
