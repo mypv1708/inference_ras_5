@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 from typing import List, Tuple
 from config import Config
 from object_tracker import SilkwormTracker

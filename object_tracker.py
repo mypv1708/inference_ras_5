@@ -65,10 +65,7 @@ class SilkwormTracker:
             return 0.0
         return inter_area / union
     
-    def _calculate_bbox_area(self, bbox):
-        """Calculate bounding box area."""
-        x1, y1, x2, y2 = bbox
-        return (x2 - x1) * (y2 - y1)
+    # Removed bbox area helper as area is not used by tracker logic
     
     def _periodic_cleanup(self):
         """Periodic cleanup to prevent memory accumulation."""
@@ -237,14 +234,10 @@ class SilkwormTracker:
                 self.next_id += 1
 
                 body_center = self._calculate_body_center(head, body, tail)
-                area = self._calculate_bbox_area(bbox)
-                
                 self.objects[obj_id] = {
                     'head': head,
                     'body': body_center,
                     'bbox': bbox,
-                    'velocity': (0.0, 0.0),
-                    'size': area,
                     'disappeared': 0
                 }
                 tracked_objects.append((obj_id, head, body, tail, bbox))

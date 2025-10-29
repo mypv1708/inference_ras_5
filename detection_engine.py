@@ -5,7 +5,6 @@ Handles the core detection loop and processing pipeline
 
 import time
 from ultralytics import YOLO
-from typing import Dict, Any
 
 from config import Config
 from camera_utils import setup_camera, get_model_info
