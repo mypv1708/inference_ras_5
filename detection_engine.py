@@ -73,6 +73,9 @@ class DetectionEngine:
                     print("Cannot read frame")
                     break
                 
+                # Record frame read
+                self.performance_monitor.record_frame_read()
+                
                 # Skip frames for performance
                 if self.performance_monitor.frame_count % self.args.skip != 0:
                     self.performance_monitor.start_frame()
@@ -136,7 +139,7 @@ class DetectionEngine:
         
         # Performance display
         if self.args.benchmark:
-            draw_performance_info(frame, inference_time, silkworms, self.performance_monitor.frame_count)
+            draw_performance_info(frame, inference_time, silkworms, self.performance_monitor.frame_count, self.performance_monitor)
         
         # Draw scale bar
         draw_scale_bar(frame)

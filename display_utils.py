@@ -8,14 +8,22 @@ import psutil
 from typing import List, Tuple
 
 
-def draw_performance_info(frame, inference_time: float, silkworms: List[Tuple], frame_count: int):
+def draw_performance_info(frame, inference_time: float, silkworms: List[Tuple], frame_count: int, performance_monitor=None):
     """Draw performance information on frame."""
-    fps = (1.0 / inference_time) if inference_time > 0 else 0
+    # Calculate FPS based on performance monitor if available
+    if performance_monitor:
+        camera_fps = performance_monitor.get_current_fps()
+        processing_fps = performance_monitor.get_processing_fps()
+        fps_text = f"Cam: {camera_fps:.1f} | Proc: {processing_fps:.1f}"
+    else:
+        # Fallback to inference time based FPS
+        fps = (1.0 / inference_time) if inference_time > 0 else 0
+        fps_text = f"FPS: {fps:.1f}"
     
     # Memory usage
     memory_percent = psutil.virtual_memory().percent
     
-    cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30), 
+    cv2.putText(frame, fps_text, (10, 30), 
                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
     cv2.putText(frame, f"Detections: {len(silkworms)}", (10, 60), 
                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
