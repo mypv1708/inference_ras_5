@@ -1,9 +1,10 @@
 """
 Main detection engine
-Handles the core detection loop and processing pipeline
+Handles the core detection loop and processing pipeline with threaded capture
 """
 
 import time
+from threading import Thread, Lock
 from ultralytics import YOLO
 
 from config import Config
@@ -35,6 +36,13 @@ class DetectionEngine:
         self.cap = self._setup_camera()
         self.tracker = self._setup_tracker()
         self.performance_monitor = PerformanceMonitor()
+
+        # Threaded capture state
+        self.running = True
+        self._frame_lock = Lock()
+        self._latest_frame = None
+        self._capture_thread = Thread(target=self._capture_loop, daemon=True)
+        self._capture_thread.start()
         
         # Detection state
         self.overlap_counters = {}
@@ -45,6 +53,15 @@ class DetectionEngine:
         print(f"Camera: 640x480 @ {args.fps} FPS")
         print(f"Inference size: {args.imgsz}")
         print(f"Config: conf={args.conf}, skip={args.skip}, pose_conf={cfg.pose_conf}")
+        
+        # Configure torch threads for CPU inference (if available)
+        if self.device == 'cpu':
+            try:
+                import torch
+                torch.set_num_threads(2)
+                print("[Torch] set_num_threads:", torch.get_num_threads())
+            except Exception:
+                pass
     
     def _setup_model(self) -> YOLO:
         """Setup YOLO model."""
@@ -67,16 +84,16 @@ class DetectionEngine:
         """Run the main detection loop."""
         try:
             while True:
-                ret, frame = self.cap.read()
-                if not ret:
-                    print("Cannot read frame")
-                    break
-                
-                # Record frame read
-                self.performance_monitor.record_frame_read()
+                # Get latest frame from capture thread
+                with self._frame_lock:
+                    frame = None if self._latest_frame is None else self._latest_frame.copy()
+                    self._latest_frame = None
+                if frame is None:
+                    time.sleep(0.001)
+                    continue
                 
                 # Skip frames for performance
-                if self.performance_monitor.frame_count % self.args.skip != 0:
+                if (self.performance_monitor.total_frames_read % max(1, self.args.skip)) != 0:
                     self.performance_monitor.start_frame()
                     continue
                 
@@ -99,6 +116,17 @@ class DetectionEngine:
         finally:
             self._cleanup()
             self._print_summary()
+
+    def _capture_loop(self):
+        """Continuously read frames from the camera in a background thread."""
+        while self.running:
+            ret, frame = self.cap.read()
+            if not ret:
+                time.sleep(0.01)
+                continue
+            with self._frame_lock:
+                self._latest_frame = frame
+            self.performance_monitor.record_frame_read()
     
     def _process_frame(self, frame):
         """Process a single frame."""
@@ -156,6 +184,12 @@ class DetectionEngine:
     
     def _cleanup(self):
         """Cleanup resources."""
+        self.running = False
+        try:
+            if hasattr(self, '_capture_thread') and self._capture_thread.is_alive():
+                self._capture_thread.join(timeout=0.5)
+        except Exception:
+            pass
         self.cap.release()
         if not self.args.no_display:
             import cv2
